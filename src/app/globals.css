@@ -53,8 +53,9 @@
     border-color: var(--border, #e5e7eb);
     outline-color: var(--ring, #3b82f6);
   }
-  body {
-    background-color: var(--background, #ffffff);
-    color: var(--foreground, #000000);
-  }
+ body {
+  background-color: #FBF6EE;
+  color: #3E2A1E;
+  font-family: var(--font-josefin), sans-serif;
+}
 }
