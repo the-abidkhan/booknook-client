@@ -19,35 +19,35 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={josefinSans.variable}>
-      <body className="flex min-h-screen flex-col bg-[#FBF6EE] text-[#3E2A1E]">
+      <body className="flex min-h-screen flex-col bg-[#F3E7D3] text-[#3E2A1E]">
         <Toaster
-  position="top-center"
-  toastOptions={{
-    duration: 3000,
-    success: {
-      style: {
-        background: '#16A34A',
-        color: '#ffffff',
-        fontWeight: 600,
-      },
-      iconTheme: {
-        primary: '#ffffff',
-        secondary: '#16A34A',
-      },
-    },
-    error: {
-      style: {
-        background: '#DC2626',
-        color: '#ffffff',
-        fontWeight: 600,
-      },
-      iconTheme: {
-        primary: '#ffffff',
-        secondary: '#DC2626',
-      },
-    },
-  }}
-/>
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            success: {
+              style: {
+                background: '#16A34A',
+                color: '#ffffff',
+                fontWeight: 600,
+              },
+              iconTheme: {
+                primary: '#ffffff',
+                secondary: '#16A34A',
+              },
+            },
+            error: {
+              style: {
+                background: '#DC2626',
+                color: '#ffffff',
+                fontWeight: 600,
+              },
+              iconTheme: {
+                primary: '#ffffff',
+                secondary: '#DC2626',
+              },
+            },
+          }}
+        />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
