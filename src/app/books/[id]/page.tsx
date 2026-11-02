@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useSession } from '@/lib/auth-client';
+import { apiFetch } from '@/lib/api';
 
 type Book = {
     _id: string;
@@ -13,7 +14,8 @@ type Book = {
     category: string;
     image: string;
     description: string;
-    copies: number;
+    totalCopies: number;
+    availableCopies: number;
     userName: string;
     userEmail: string;
 };
@@ -53,7 +55,7 @@ export default function BookDetailsPage() {
             router.push(`/login?redirect=/books/${id}`);
             return;
         }
-        if (book && book.copies <= 0) {
+        if (book && book.availableCopies <= 0) {
             toast.error('This book is currently not available');
             return;
         }
@@ -136,26 +138,26 @@ export default function BookDetailsPage() {
 
                         <div className="mt-6 border-t border-[#E3D3BC] pt-4 text-sm text-[#5C4433] space-y-1">
                             <p><strong>Added By:</strong> {book.userName} ({book.userEmail})</p>
-                            <p><strong>Available Copies:</strong> {book.copies}</p>
+                            <p><strong>Available Copies:</strong> {book.availableCopies}</p>
                         </div>
                     </div>
 
                     <div className="mt-8">
                         <button
                             onClick={handleBorrowClick}
-                            disabled={book.copies <= 0}
-                            className={`w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors ${book.copies > 0
-                                    ? 'bg-[#8B4A2B] hover:bg-[#723B22]'
-                                    : 'bg-gray-400 cursor-not-allowed'
+                            disabled={book.availableCopies <= 0}
+                            className={`w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors ${book.availableCopies > 0
+                                ? 'bg-[#8B4A2B] hover:bg-[#723B22]'
+                                : 'bg-gray-400 cursor-not-allowed'
                                 }`}
                         >
-                            {book.copies > 0 ? 'Borrow This Book' : 'Not Available'}
+                            {book.availableCopies > 0 ? 'Borrow This Book' : 'Not Available'}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Borrow Confirmation Modal */}
+
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
                     <div className="w-full max-w-md rounded-xl bg-[#FFFBF2] border border-[#E3D3BC] p-6 shadow-xl">
