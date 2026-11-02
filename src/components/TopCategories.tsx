@@ -2,14 +2,36 @@ import Link from 'next/link';
 import { BookOpen, GraduationCap, Compass, Smile, FolderKanban } from 'lucide-react';
 
 const categories = [
-    { name: 'Fiction', count: '15 Books', icon: BookOpen, href: '/books?category=Fiction' },
-    { name: 'Science', count: '12 Books', icon: GraduationCap, href: '/books?category=Science' },
-    { name: 'History', count: '10 Books', icon: Compass, href: '/books?category=History' },
-    { name: 'Kids', count: '8 Books', icon: Smile, href: '/books?category=Kids' },
-    { name: 'Others', count: '5 Books', icon: FolderKanban, href: '/books?category=Others' },
+    { name: 'Fiction', icon: BookOpen },
+    { name: 'Science', icon: GraduationCap },
+    { name: 'History', icon: Compass },
+    { name: 'Kids', icon: Smile },
+    { name: 'Others', icon: FolderKanban },
 ];
 
-export default function TopCategories() {
+type Book = { category: string };
+
+async function getBooks(): Promise<Book[]> {
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`, {
+            cache: 'no-store',
+        });
+        if (!res.ok) return [];
+        return res.json();
+    } catch {
+        return [];
+    }
+}
+
+export default async function TopCategories() {
+    const books = await getBooks();
+
+    const counts = categories.map((cat) => ({
+        ...cat,
+        count: books.filter((b) => b.category === cat.name).length,
+        href: `/books?category=${cat.name}`,
+    }));
+
     return (
         <section className="py-14 bg-[#F3E7D3]">
             <div className="mx-auto max-w-6xl px-4">
@@ -17,11 +39,11 @@ export default function TopCategories() {
                     Top Categories
                 </h2>
                 <p className="mt-2 text-center text-[#5C4433]">
-                    Explore books across our 50 curated collection
+                    Explore books across our {books.length} curated collection
                 </p>
 
                 <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {categories.map((cat) => (
+                    {counts.map((cat) => (
                         <Link
                             key={cat.name}
                             href={cat.href}
@@ -34,7 +56,9 @@ export default function TopCategories() {
                                 <h3 className="text-lg font-bold text-[#3E2A1E] group-hover:text-[#8B4A2B]">
                                     {cat.name}
                                 </h3>
-                                <p className="text-sm text-[#5C4433]">{cat.count}</p>
+                                <p className="text-sm text-[#5C4433]">
+                                    {cat.count} {cat.count === 1 ? 'Book' : 'Books'}
+                                </p>
                             </div>
                         </Link>
                     ))}
