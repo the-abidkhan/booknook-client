@@ -1,15 +1,22 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { signIn } from '@/lib/auth-client';
+import { signIn, useSession } from '@/lib/auth-client';
 
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const redirectTo = searchParams.get('redirect') || '/';
+    const rawRedirect = searchParams.get('redirect') || '/';
+    const redirectTo =
+        rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/';
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        if (session) router.replace(redirectTo);
+    }, [session, redirectTo, router]);
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -19,19 +26,21 @@ function LoginForm() {
         const password = String(formData.get('password'));
 
         setLoading(true);
-        const { error } = await signIn.email({ email, password });
-        setLoading(false);
-
-        if (error) {
-            toast.error(error.message || 'Invalid email or password');
-            return;
+        try {
+            const { error } = await signIn.email({ email, password });
+            if (error) {
+                toast.error(error.message || 'Invalid email or password');
+                return;
+            }
+            toast.success('Login successful!');
+            router.push(redirectTo);
+            router.refresh();
+        } catch {
+            toast.error('Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
         }
-
-        toast.success('Login successful!');
-        router.push(redirectTo);
-        router.refresh();
     };
-
     const handleGoogle = () => {
         toast('Google login will be added soon');
     };
@@ -54,9 +63,13 @@ function LoginForm() {
                         <label className="mb-1 block text-sm font-semibold text-[#3E2A1E]">Password</label>
                         <input name="password" type="password" required placeholder="Password" className={inputClass} />
                         <div className="mt-1 text-right">
-                            <Link href="/forgot-password" className="text-sm font-semibold text-[#8B4A2B] hover:underline">
+                            <button
+                                type="button"
+                                onClick={() => toast('Password reset is not available yet')}
+                                className="text-sm font-semibold text-[#8B4A2B] hover:underline"
+                            >
                                 Forget Password?
-                            </Link>
+                            </button>
                         </div>
                     </div>
                     <button

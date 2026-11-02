@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { signUp, signOut } from '@/lib/auth-client';
 
 export default function RegisterPage() {
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [passwordError, setPasswordError] = useState('');
 
@@ -20,8 +18,7 @@ export default function RegisterPage() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const form = e.currentTarget;
-        const formData = new FormData(form);
+        const formData = new FormData(e.currentTarget);
         const name = String(formData.get('name'));
         const email = String(formData.get('email'));
         const image = String(formData.get('image'));
@@ -35,22 +32,30 @@ export default function RegisterPage() {
         }
 
         setLoading(true);
-        const { error: signUpError } = await signUp.email({
-            name,
-            email,
-            password,
-            image,
-        });
-        setLoading(false);
+        try {
+            const { error: signUpError } = await signUp.email({
+                name,
+                email,
+                password,
+                image,
+            });
 
-        if (signUpError) {
-            toast.error(signUpError.message || 'Registration failed');
-            return;
+            if (signUpError) {
+                toast.error(signUpError.message || 'Registration failed');
+                setLoading(false);
+                return;
+            }
+
+            await signOut();
+            toast.success('Registration successful! Please login.');
+
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1200);
+        } catch {
+            toast.error('Something went wrong. Please try again.');
+            setLoading(false);
         }
-
-        await signOut();
-        toast.success('Registration successful! Please login.');
-        router.push('/login');
     };
 
     const inputClass =

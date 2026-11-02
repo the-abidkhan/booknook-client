@@ -5,9 +5,10 @@ const privatePaths = ['/add-book', '/my-books', '/my-borrows', '/my-profile'];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const isPrivate =
-    privatePaths.some((p) => pathname === p || pathname.startsWith(p + '/')) ||
-    /^\/books\/[^/]+$/.test(pathname);
+
+  const isPrivate = privatePaths.some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  );
 
   if (!isPrivate) return NextResponse.next();
 
@@ -27,6 +28,5 @@ export const config = {
     '/my-books/:path*',
     '/my-borrows/:path*',
     '/my-profile/:path*',
-    '/books/:id',
   ],
 };
