@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { FcGoogle } from 'react-icons/fc';
 import { signIn, useSession } from '@/lib/auth-client';
 
 function LoginForm() {
@@ -18,6 +19,7 @@ function LoginForm() {
         if (session) router.replace(redirectTo);
     }, [session, redirectTo, router]);
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,8 +43,22 @@ function LoginForm() {
             setLoading(false);
         }
     };
-    const handleGoogle = () => {
-        toast('Google login will be added soon');
+
+    const handleGoogle = async () => {
+        setGoogleLoading(true);
+        try {
+            const { error } = await signIn.social({
+                provider: 'google',
+                callbackURL: redirectTo,
+            });
+            if (error) {
+                toast.error(error.message || 'Google login failed');
+                setGoogleLoading(false);
+            }
+        } catch {
+            toast.error('Something went wrong. Please try again.');
+            setGoogleLoading(false);
+        }
     };
 
     const inputClass =
@@ -90,9 +106,11 @@ function LoginForm() {
                 <button
                     type="button"
                     onClick={handleGoogle}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#E3D3BC] bg-[#FFFBF2] px-4 py-2.5 font-semibold text-[#3E2A1E] transition-colors hover:bg-[#EAD9C0]"
+                    disabled={googleLoading}
+                    className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#E3D3BC] bg-[#FFFBF2] px-4 py-2.5 font-semibold text-[#3E2A1E] transition-colors hover:bg-[#EAD9C0] disabled:opacity-60"
                 >
-                    Continue with Google
+                    <FcGoogle className="h-5 w-5" />
+                    {googleLoading ? 'Redirecting...' : 'Continue with Google'}
                 </button>
 
                 <p className="mt-6 text-center text-sm text-[#5C4433]">
