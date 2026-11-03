@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useSession } from '@/lib/auth-client';
 import { apiFetch } from '@/lib/api';
@@ -27,18 +26,23 @@ export default function BookDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [borrowLoading, setBorrowLoading] = useState(false);
+    const [alreadyBorrowed, setAlreadyBorrowed] = useState(false);
 
     const { data: session } = useSession();
 
     useEffect(() => {
         async function fetchBookDetails() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`);
-                if (!res.ok) throw new Error('Failed to fetch book');
-                const data = await res.json();
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`, {
+                    cache: 'no-store',
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
                 setBook(data);
-            } catch {
-                toast.error('Could not load book details');
+            } catch (error: any) {
+                toast.error(error.message || 'Could not load book details', {
+                    id: 'book-details-error',
+                });
             } finally {
                 setLoading(false);
             }
@@ -49,10 +53,24 @@ export default function BookDetailsPage() {
         }
     }, [id]);
 
+    useEffect(() => {
+        if (!session || !id) {
+            setAlreadyBorrowed(false);
+            return;
+        }
+        apiFetch<{ bookId: string }[]>('/borrows', { auth: true, cache: 'no-store' })
+            .then((list) => setAlreadyBorrowed(list.some((b) => b.bookId === id)))
+            .catch(() => setAlreadyBorrowed(false));
+    }, [session, id]);
+
     const handleBorrowClick = () => {
         if (!session) {
             toast.error('Please login to borrow a book');
             router.push(`/login?redirect=/books/${id}`);
+            return;
+        }
+        if (alreadyBorrowed) {
+            toast.error('You have already borrowed this book');
             return;
         }
         if (book && book.availableCopies <= 0) {
@@ -68,25 +86,14 @@ export default function BookDetailsPage() {
 
         setBorrowLoading(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/borrows`, {
+            await apiFetch('/borrows', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    bookId: book._id,
-                    bookTitle: book.title,
-                    bookImage: book.image,
-                    userEmail: session.user.email,
-                    userName: session.user.name,
-                }),
+                auth: true,
+                body: JSON.stringify({ bookId: book._id }),
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Failed to borrow book');
-            }
-
             toast.success('Book borrowed successfully!');
+            setAlreadyBorrowed(true);
             setIsModalOpen(false);
             router.push('/my-borrows');
         } catch (error: any) {
@@ -99,7 +106,7 @@ export default function BookDetailsPage() {
     if (loading) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center">
-                <p className="text-lg font-semibold text-[#3E2A1E]">Loading book details...</p>
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E3D3BC] border-t-[#8B4A2B]" />
             </div>
         );
     }
@@ -122,7 +129,6 @@ export default function BookDetailsPage() {
         <div className="mx-auto max-w-5xl px-4 py-12">
             <div className="grid gap-8 md:grid-cols-2 rounded-2xl border border-[#E3D3BC] bg-[#FFFBF2] p-8 shadow-sm">
                 <div className="relative h-96 w-full overflow-hidden rounded-xl">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={book.image} alt={book.title} className="h-full w-full object-cover" />
                 </div>
 
@@ -138,25 +144,29 @@ export default function BookDetailsPage() {
 
                         <div className="mt-6 border-t border-[#E3D3BC] pt-4 text-sm text-[#5C4433] space-y-1">
                             <p><strong>Added By:</strong> {book.userName} ({book.userEmail})</p>
-                            <p><strong>Available Copies:</strong> {book.availableCopies}</p>
+                            <p><strong>Available Copies:</strong> {book.availableCopies} / {book.totalCopies}</p>
                         </div>
                     </div>
 
                     <div className="mt-8">
                         <button
                             onClick={handleBorrowClick}
-                            disabled={book.availableCopies <= 0}
-                            className={`w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors ${book.availableCopies > 0
-                                ? 'bg-[#8B4A2B] hover:bg-[#723B22]'
-                                : 'bg-gray-400 cursor-not-allowed'
-                                }`}
+                            disabled={book.availableCopies <= 0 || alreadyBorrowed}
+                            className={`w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors ${
+                                book.availableCopies > 0 && !alreadyBorrowed
+                                    ? 'bg-[#8B4A2B] hover:bg-[#723B22]'
+                                    : 'bg-gray-400 cursor-not-allowed'
+                            }`}
                         >
-                            {book.availableCopies > 0 ? 'Borrow This Book' : 'Not Available'}
+                            {alreadyBorrowed
+                                ? 'Already Borrowed'
+                                : book.availableCopies > 0
+                                  ? 'Borrow This Book'
+                                  : 'Not Available'}
                         </button>
                     </div>
                 </div>
             </div>
-
 
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -195,8 +205,8 @@ export default function BookDetailsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={borrowLoading}
-                                    className="rounded-lg bg-[#8B4A2B] px-4 py-2 font-semibold text-white hover:bg-[#723B22] disabled:opacity-60"
+                                    disabled={borrowLoading || alreadyBorrowed}
+                                    className="rounded-lg bg-[#8B4A2B] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#723B22] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#8B4A2B]"
                                 >
                                     {borrowLoading ? 'Confirming...' : 'Confirm Borrow'}
                                 </button>
