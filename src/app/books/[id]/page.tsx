@@ -19,25 +19,33 @@ type Book = {
     userEmail: string;
 };
 
+const Spinner = () => (
+    <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E3D3BC] border-t-[#8B4A2B]" />
+    </div>
+);
+
 export default function BookDetailsPage() {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const router = useRouter();
+    const { data: session, isPending } = useSession();
+
     const [book, setBook] = useState<Book | null>(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [borrowLoading, setBorrowLoading] = useState(false);
     const [alreadyBorrowed, setAlreadyBorrowed] = useState(false);
 
-    const { data: session } = useSession();
+    useEffect(() => {
+        if (!isPending && !session) router.replace(`/login?redirect=/books/${id}`);
+    }, [isPending, session, id, router]);
 
     useEffect(() => {
-        async function fetchBookDetails() {
+        if (!session || !id) return;
+
+        async function loadData() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`, {
-                    cache: 'no-store',
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+                const data = await apiFetch<Book>(`/books/${id}`, { auth: true, cache: 'no-store' });
                 setBook(data);
             } catch (error: any) {
                 toast.error(error.message || 'Could not load book details', {
@@ -46,29 +54,22 @@ export default function BookDetailsPage() {
             } finally {
                 setLoading(false);
             }
+
+            try {
+                const list = await apiFetch<{ bookId: string }[]>('/borrows', {
+                    auth: true,
+                    cache: 'no-store',
+                });
+                setAlreadyBorrowed(list.some((b) => b.bookId === id));
+            } catch {
+                setAlreadyBorrowed(false);
+            }
         }
 
-        if (id) {
-            fetchBookDetails();
-        }
-    }, [id]);
-
-    useEffect(() => {
-        if (!session || !id) {
-            setAlreadyBorrowed(false);
-            return;
-        }
-        apiFetch<{ bookId: string }[]>('/borrows', { auth: true, cache: 'no-store' })
-            .then((list) => setAlreadyBorrowed(list.some((b) => b.bookId === id)))
-            .catch(() => setAlreadyBorrowed(false));
+        loadData();
     }, [session, id]);
 
     const handleBorrowClick = () => {
-        if (!session) {
-            toast.error('Please login to borrow a book');
-            router.push(`/login?redirect=/books/${id}`);
-            return;
-        }
         if (alreadyBorrowed) {
             toast.error('You have already borrowed this book');
             return;
@@ -103,13 +104,7 @@ export default function BookDetailsPage() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E3D3BC] border-t-[#8B4A2B]" />
-            </div>
-        );
-    }
+    if (isPending || !session || loading) return <Spinner />;
 
     if (!book) {
         return (
@@ -180,7 +175,7 @@ export default function BookDetailsPage() {
                                 <input
                                     type="text"
                                     readOnly
-                                    value={session?.user?.name || ''}
+                                    value={session.user.name || ''}
                                     className="w-full rounded-lg border border-[#E3D3BC] bg-[#F5EBDD] px-4 py-2 text-[#3E2A1E] outline-none cursor-not-allowed"
                                 />
                             </div>
@@ -190,7 +185,7 @@ export default function BookDetailsPage() {
                                 <input
                                     type="email"
                                     readOnly
-                                    value={session?.user?.email || ''}
+                                    value={session.user.email || ''}
                                     className="w-full rounded-lg border border-[#E3D3BC] bg-[#F5EBDD] px-4 py-2 text-[#3E2A1E] outline-none cursor-not-allowed"
                                 />
                             </div>
