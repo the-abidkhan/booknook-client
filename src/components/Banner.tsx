@@ -27,14 +27,14 @@ const slides = [
 
 export default function Banner() {
   return (
-    <section>
+    <section className="mx-auto max-w-6xl px-4 py-6">
       <Swiper
         modules={[Autoplay, Navigation, Pagination]}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
         loop
-        className="h-[420px] md:h-[500px]"
+        className="h-[420px] overflow-hidden rounded-xl md:h-[500px]"
         style={
           {
             '--swiper-navigation-color': '#ffffff',
