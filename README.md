@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# 📚 BookNook
 
-First, run the development server:
+**A small online library. Add a book, borrow a book, return a book.**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+[![Live Site](https://img.shields.io/badge/Live%20Site-booknook--client--theta.vercel.app-8B4A2B?style=for-the-badge)](https://booknook-client-theta.vercel.app)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+</div>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Features
 
-## Learn More
+- 📖 **Browse all books** in a responsive grid with category tabs, search and sorting
+- 🔐 **Secure authentication** with email/password and Google login (BetterAuth + MongoDB)
+- ➕ **Add your own books** with cover image upload and total copies
+- ✏️ **Manage your books**: edit with a pre-filled form, delete with a confirmation modal
+- 🔄 **Borrow and return** books, and track them all in My Borrows
+- 📉 **Live availability**: copies update on borrow and return, with a "Not Available" state and no double borrowing
+- 🛡️ **JWT-protected API** with private routes that survive a page reload
+- 🏠 **Rich home page**: Swiper banner, latest 6 New Arrivals, How It Works and Top Categories
+- 💬 **Polished UX**: toast messages, loading spinners, custom 404 and dynamic page titles
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Layer | Technology |
+|---|---|
+| **Client** | Next.js (App Router), TypeScript, Tailwind CSS, Swiper.js, react-hot-toast |
+| **Auth** | BetterAuth, MongoDB Adapter, JWT |
+| **Server** | Express.js, MongoDB |
+| **Hosting** | Vercel |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🗺️ Routes
 
-## Deploy on Vercel
+| Route | Access | Purpose |
+|---|---|---|
+| `/` | Public | Home |
+| `/books` | Public | All books |
+| `/books/:id` | Private | Details and borrow |
+| `/add-book` | Private | Add a book |
+| `/my-books` | Private | Edit and delete your books |
+| `/my-borrows` | Private | Borrowed books and return |
+| `/my-profile` | Private | Your profile |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+<div align="center">
+
+Made with ☕ and 📚 by **Abid Khan**
+
+</div>
